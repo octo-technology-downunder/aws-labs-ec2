@@ -49,5 +49,22 @@ Having a EC2 instance running, let's now install and launch a Apache HTTP server
        _|  (     /   Amazon Linux 2 AMI
       ___|\___|___|
 ```
-* Update your kernel as suggested in the prompt:<br>`sudo yum update`
-* Install Apache HTTP server:<br>`sudo yum install httpd`
+* To make our life easier for this lab, switch to root:<br> `sudo su -`
+* Update your kernel as suggested in the prompt:<br>`yum update`
+* Install Apache HTTP server:<br>`yum install httpd`
+* Run Appache HTTP server on default port `80`:<br> `service httpd start`
+* Create a simple HTML page in server's directory:<br>
+`cd /var/www/html`<br><br>
+`touch index.html`<br><br>
+`echo ' `<br>
+`<html> `<br>
+`<head></head> `<br>
+`<body><h2>Hello OCTO!</h2><h3>This is my AWS EC2 based website!</h3></body> `<br>
+`</html>' > index.html`
+
+The last thing you need is to allow external HTTP traffic to your EC2 instance - by default only ssh is allowed:
+* In AWS Console, go to EC2 service and find your EC2 instance. Click on it and on Description tab find Security Groups field. Click on the security group associated with instance. It may have some default name like `launch-wizard-NN`
+* On Inbound tab click Edit, then Add Rule and add a new HTTP rule on port 80 from 0.0.0.0/0 source:<br>
+![Inbound](images/ec2-inbound.png "Inbound")<br>
+
+Now copy `Public DNS (IPv4)` value from your instance and paste into URL of your browser - you should be able to see your HTML page!
