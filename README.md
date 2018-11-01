@@ -6,7 +6,7 @@ In this lab we'll need to create a load-balanced webserver and host a simple web
 That will cover the following topics:
 - Working with AWS Elastic Cloud Compute (EC2) service via AWS Console and aws cli
 - Creating a simple webserver hosted on EC2 instance
-- Creating a load balancers and auto scaling groups
+- Creating a load balancer and auto scaling group
 
 This lab will take approximately 60 minutes.
 
@@ -67,4 +67,57 @@ The last thing you need is to allow external HTTP traffic to your EC2 instance -
 * On Inbound tab click Edit, then Add Rule and add a new HTTP rule on port 80 from 0.0.0.0/0 source:<br>
 ![Inbound](images/ec2-inbound.png "Inbound")<br>
 
-Now copy `Public DNS (IPv4)` value from your instance and paste into URL of your browser - you should be able to see your HTML page!
+Now copy `Public DNS (IPv4)` value from your instance and paste into URL of your browser - you should be able to see your HTML page!<br>
+![Awesome](images/ec2-awesome.png "Awesome")<br>
+
+## Stop instance via AWS CLI
+Before we move forward, let's cleanup our workspace and terminate our EC2 instance. The only trick is that we're going to use command line for that<br>
+Assuming you've [installed](https://docs.aws.amazon.com/cli/latest/userguide/installing.html) and [configured](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+) AWS CLI, commands will be as follows:
+* Describe EC2 instances:<br>
+`aws ec2 describe-instances`<br>
+* This command would probably return too much information which is hard to handle. So, let's refine our request by adding region parameter and filter by instance name (don't forget to replace <your_name> in the instance name):<br>
+```aws ec2 describe-instances --region ap-southeast-2 --output json --query 'Reservations[?Instances[?Tags[?Key==`Name` && Value==`foundation-labs-ec2-<your_name>`]]].{InstanceId:Instances[0].InstanceId,Name:Instances[0].Tags[0].Value}'```<br>
+A bit more code, huh?? But we've got only values we need: `InstanceId` of the instance we want to stop and the name. For more information please check out [AWS CLI page](https://docs.aws.amazon.com/cli/latest/userguide/controlling-output.html)
+* Terminate EC2 instance with the following command (replace instance-ids value with the one from the previous command output):<br>
+`aws ec2 terminate-instances --instance-ids i-002b70c9b39e96793`<br>
+
+<h4>Well done! Let's move to the next challenge!</h4>
+
+## Create load-balanced web application
+Here is a diagram of a solution we're going to build:<br>
+![ALB](images/ec2-alb.png "ALB")<br>
+Let's do that!
+
+### Create Launch Configuration
+* In AWS Console, go to `EC2` service
+* Click on `Launch Configurations` in the left panel, then `Create launch configuration`
+* Select `Amazon Linux 2 AMI`, then `t2.micro`
+* Specify `Name` for launch configuration as `foundation-labs-ec2-lc-<your_name>`
+* In `Advanced Details` set `User data` as follows:<br>
+```
+sudo su -
+yum update
+yum install httpd
+service httpd start
+cd /var/www/html
+touch index.html
+echo '
+<html>
+<head></head>
+<body><h2>Hello OCTO!</h2><h3>This is my AWS EC2 load balanced website!</h3></body>
+</html>' > index.html
+```
+* Also set `IP Address Type` to `Do not assign a public IP address to any instances`
+* Proceed with all other options as default, in one of the final screens you will be asked for `Key-Value-Pair`: select existing one, which we created previously for our single EC2 instance (`foundation-labs-kp-<your_name>`)
+
+### Create Application Load Balancer
+* In AWS Console, go to `EC2` service
+* Click on `Auto Scaling Groups` in the left panel, then
+
+### Create Auto Scaling Groups
+* In AWS Console, go to `EC2` service
+* Click on `Auto Scaling Groups` in the left panel, then `Create Auto Scaling Groups`, then select `Launch Template` option
+* In the list of templates select the one you've created on a previous steps
+* On the next page, set `Group size = 2`
+* In Advanced Details, select `Load Balancing -> Receive traffic from one or more load balancers`
