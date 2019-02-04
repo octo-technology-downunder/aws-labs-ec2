@@ -36,7 +36,7 @@ Let's do that!
 * Select `Instances` on the left, then click `Launch Instance`
 * Choose your AMI (e.g. free tier Amazon Linux), then choose your instance size (e.g. `t2.micro`)
 * In one of the next pages you will be able to edit Tags. Add a tag with key `Name` and value `foundation-labs-ec2-<your_name>`
-* Just before you launch an instance, you will be asked to choose a key pair. These are credentials to access the instance in the future. Choose to create a new one and give it a name `foundation-labs-kp-<your_name>`. Download a credentials file in the same popup window
+* Just before you launch an instance, you will be asked to choose a key pair. These are credentials to access the instance in the future. Choose to create a new one and give it a name `foundation-labs-kp-<your_name>.pem`. Download a credentials file in the same popup window
 
 Awesome! You've gone through the steps and created a EC2 instance!<br>
 Now you can see it in the instances list:<br>
@@ -45,12 +45,12 @@ Now you can see it in the instances list:<br>
 ### Create a simple HTTP server
 Having a EC2 instance running, let's now install and launch a Apache HTTP server with a simple page:
 * In AWS Console, go to EC2 service and find your EC2 instance. Click on it and on Description tab find and copy a `IPv4 Public IP` field value. We'll be referencing this value as `<your_ec2_ip>`
-* Open your terminal and type `ssh ec2-user@<your_ec2_ip> -i <path_to_credentials>` where <br>
+* Open your terminal and type `ssh ec2-user@<your_ec2_ip> -i <path_to_credentials>.pem` where <br>
   * `ec2-user` is a privileged user name for Amazon Linux
   * `<your_ec2_ip>` is a IP address of your instance copied above,
-  * `<path_to_credentials>` is a path to a credentials file you downloaded during EC2 instance creation
+  * `<path_to_credentials>.pem` is a path to a credentials file you downloaded during EC2 instance creation
 * Accept a security prompt to add a host to the list of trusted ones
-* If you see a `bad permissions` error, you would need to do `chmod 400 <path_to_credentials>` on your credentials file. Then try to ssh again. If everything is fine, you'll see a Amazon Linux prompt:
+* If you see a `bad permissions` error, you would need to do `chmod 400 <path_to_credentials>.pem` on your credentials file. Then try to ssh again. If everything is fine, you'll see a Amazon Linux prompt:
 ```
        __|  __|_  )
        _|  (     /   Amazon Linux 2 AMI
@@ -85,6 +85,10 @@ Assuming you've [installed](https://docs.aws.amazon.com/cli/latest/userguide/ins
 `aws ec2 describe-instances`<br>
 * This command would probably return too much information which is hard to handle. So, let's refine our request by adding region parameter and filter by instance name (don't forget to replace <your_name> in the instance name):<br>
 ```aws ec2 describe-instances --region ap-southeast-2 --output json --query 'Reservations[?Instances[?Tags[?Key==`Name` && Value==`foundation-labs-ec2-<your_name>`]]].{InstanceId:Instances[0].InstanceId,Name:Instances[0].Tags[0].Value}'```<br>
+
+If you don't remember your instance region, check in your aws config file !
+$ cat ~/.aws/config
+
 A bit more code, huh?? But we've got only values we need: `InstanceId` of the instance we want to stop and the name. For more information please check out [AWS CLI page](https://docs.aws.amazon.com/cli/latest/userguide/controlling-output.html)
 * Terminate EC2 instance with the following command (replace instance-ids value with the one from the previous command output):<br>
 `aws ec2 terminate-instances --instance-ids i-002b70c9b39e96793`<br>
